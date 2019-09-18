@@ -1,0 +1,113 @@
+/*
+
+function Cell12(position, size, color, name) {
+  this.name = name;
+  this.position = position;
+  this.size = size;
+  this.color = color;
+  this.vertices = [];
+
+  let initialAngle = Math.random() * 2 * Math.PI;
+  for(let i=0; i<Math.ceil(this.size); i++) {
+    this.vertices.push([this.position, this.size, Math.random() - 0.5]);
+  }
+
+  this.movePoints = function() {
+    let n = this.vertices.length;
+    copy = []
+    for(let q = 0; q<this.vertices.length; q++) {
+      copy.push([...this.vertices[q]])
+    }
+    for(let i=0; i<copy.length; i++) {
+      let limit = 10;
+      let current = this.vertices[i];
+      let before =  this.vertices[(i-1 + n)%n] ;
+      let after = this.vertices[(i+1)%n];
+      let acc = (before[2] + after[2] + 8*Math.min(Math.max((current[2]+Math.random()-0.5)*0.7, -limit), limit))/10.0;
+      let distHold = 25;
+      for(let )
+
+
+      let radius = (before[2] + after[2] + 8 * (9 * Math.max(current[1] + acc, 0) + this.size) / 10) / 10
+      let angle = 2 * i * Math.PI / n + initialAngle
+      
+      this.vertices[i] = [[position.x + Math.cos(angle) * radius, position.y + Math.sin(angle) * radius], radius, acc]      
+    }
+  }
+
+  this.draw = function() {
+    let corner = [center[0] - width / 2, center[1] - height / 2]
+    this.movePoints()
+    
+    ctx.fillStyle = this.color
+    ctx.strokeStyle = this.color
+    ctx.lineWidth = 7
+    let n = this.vertices.length;
+
+    ctx.beginPath();
+
+    for(let i=0; i<n; i++) {
+      let radius = this.vertices[i][1];
+      let angle = 2 * Math.PI * i / n + initialAngle;
+      ctx.lineTo(this.position[0] + Math.cos(angle) * radius - corner[0], this.position[1] + Math.sin(angle) * radius - corner[1]);
+    }
+    ctx.closePath();
+    ctx.fill()
+    ctx.stroke();
+
+  }
+  
+}
+
+function drawBackground1() {
+  let corner = [center[0] - width / 2, center[1] - height / 2]
+  ctx.beginPath();
+  ctx.fillStyle = "white";
+  ctx.rect(0, 0, width, height);
+  ctx.fill();
+  ctx.strokeStyle = "lightgray";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for(let i=0; i<Math.floor(width/square) + 1; i++) {
+    let j = i * square - (corner[0]  % square);
+    ctx.moveTo(j, 0);
+    ctx.lineTo(j, height);
+  }
+  for(let i=0; i<Math.floor(height/square) + 1; i++) {
+    let j = i * square - (corner[1]  % square);
+    ctx.moveTo(0, j);
+    ctx.lineTo(width, j);
+  }
+  ctx.stroke();
+}
+
+let player = new Cell(center, 100, "rgb(255, 0, 0)");
+
+
+let cells = [];
+cells.push(player)
+for(let i=0; i<50; i++) {
+  cells.push(new Cell([  Math.round((borderRight - borderleft + 1) * Math.random()) + borderleft, Math.round((borderBottom - borderTop + 1)* Math.random()) + borderTop], 5, "black"));
+}
+
+function drawCells1() {
+  ctx.lineCap = "round";
+  cells.sort((a,b)=>(a.size > b.size ? 1:-1))
+  for(let i=0; i<cells.length; i++) {
+    cells[i].draw();
+    console.log(cells[i].size)
+  }
+}
+
+canvas.addEventListener("mousemove", (e)=>{
+  var mouse = [e.clientX - width/2, e.clientY - width/2];
+  var distance = Math.sqrt(mouse[0]*mouse[0] + mouse[1]*mouse[1]);
+  var thresh = 100;
+  if(distance < thresh) {
+    mult = distance / thresh;
+  } else {
+    mult = 1;
+  }
+  directionX = mouse[0] / distance * mult;
+  directionY = mouse[1] / distance * mult;
+})*/
