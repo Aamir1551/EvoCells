@@ -4,13 +4,15 @@ import {Sugar} from './sugar'
 
 var canvas:HTMLCanvasElement=document.getElementsByTagName("canvas")[0];
 var ctx=canvas.getContext("2d");
-
+let dx = 0;
+let dy = 0;
+let mpos : Point = new Point(0,0)
 export class Environment {
   
-  public food:Array<Sugar>;
-  public cells:Array<Cell>;
+  public food:Array<Sugar> = [];
+  public cells:Array<Cell> = [];
   public timeCounter = 0;
-
+  
   constructor(food:Array<Sugar> = [], cells:Array<Cell> = [], public ctx:CanvasRenderingContext2D) {
     [this.food, this.cells] = [food, cells]
   }
@@ -19,41 +21,41 @@ export class Environment {
     for(let i=0; i<this.food.length; i++) {
       this.food[i].draw(ctx);
     }
+    
+    this.cells.sort((a, b)=> b.size - a.size)
     for(let i=0; i<this.cells.length; i++) {
       this.cells[i].draw(ctx);
     }
   }
-
+  
   public detectAllCellCollisions() : void{
     this.cells.forEach(x=>x.vertices.forEach(y=>y.colliding = false))
-    
     for(let i=0; i<this.cells.length; i++) {
       let currentCell : Cell = this.cells[i];
       let distanceThreshold = currentCell.distanceThreshold;
-      
       for(let j=0; j<currentCell.vertices.length; j++) {
         let currentVertex = currentCell.vertices[j];
-        currentVertex.colliding = false;
+        if(currentVertex.colliding == true){continue}
         if(!currentVertex.position.isInside()) {currentVertex.colliding = true; continue}
 
         for(let k = 0; k<this.food.length; k++) {
-          let dist = currentVertex.position.distanceSquared(this.food[i].position);
+          let dist = currentVertex.position.distanceSquared(this.food[k].position);
           if(dist <= distanceThreshold) {
-            this.food.splice(j, 1) 
+            this.food.splice(k, 1)
             currentCell.eatFood(10)
           }
         }
         
         for(let k=i+1; k<this.cells.length; k++) {
           let otherCell : Cell= this.cells[k];
-          for(let l=0; l<this.cells[k].vertices.length; l++) {
-            let otherCellVertex = this.cells[k].vertices[l];
+          for(let l=0; l<otherCell.vertices.length; l++) {
+            let otherCellVertex = otherCell.vertices[l];
             let dist = otherCellVertex.position.distanceSquared(currentVertex.position);
-            if(dist <= distanceThreshold){ [currentVertex.colliding, otherCellVertex.colliding] = [false, false] }
-
-            if( -dist / 2 >= 0.7 * otherCell.size && currentCell.size > otherCell.size) {
+            if(dist <= distanceThreshold){ [currentVertex.colliding, otherCellVertex.colliding] = [true, true] }
+            if((dist <= distanceThreshold /4) && currentCell.size > otherCell.size * 1.2) {
               currentCell.eatFood(otherCell.size * otherCell.size * Math.PI);
-            } //eat it
+              this.cells.splice(k, 1);
+            } 
           }
         }
       }
@@ -81,27 +83,27 @@ export class Environment {
     }
     ctx.stroke();
   } 
-
+  
   public iterate() {
     this.timeCounter+=0.01
-
     if(this.timeCounter>=1) {
       this.cells.forEach(x=>x.updatePoints());
       this.timeCounter = 0;
     }
-
     this.cells.forEach(x=>x.moveXY(this.timeCounter))
-    setUp.center = new Point(setUp.mapwidth/2, setUp.mapheight/2);
-
+    let a = 10 
+    mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
+    setUp.center = mpos//= new Point(setUp.mapwidth/2, setUp.mapheight/2);
     this.drawBackground();
     this.drawAllObjects();
+    this.detectAllCellCollisions();
   }
 }
 
 let petri = new Environment([], [], ctx)
 
-for(let i=0; i<10; i++) {
-  petri.cells.push(new Cell(new Point(Math.random() * canvas.width, Math.random() * canvas.height), Math.random() * 50 + 70, [Math.random() * 255, Math.random() * 255, Math.random() * 255]));
+for(let i=0; i<30; i++) {
+  petri.cells.push(new Cell(new Point(Math.random() * setUp.mapwidth, Math.random() * setUp.mapheight), Math.random() * 50 + 70, [Math.random() * 255, Math.random() * 255, Math.random() * 255]));
 }
 
 for(let i=0; i<50; i++) {
@@ -109,10 +111,29 @@ for(let i=0; i<50; i++) {
 }
 
 function start() {
-
   petri.iterate();
-
+  if(petri.food.length < 80) {
+    for(let i=0; i<200; i++) {
+      petri.food.push(new Cell(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), 5, [0,0,0]));
+    }
+  }
   setTimeout(start, 1000/60) 
 }
+
+
+
+
+canvas.addEventListener("mousemove", (e:MouseEvent) => {
+ let a = 2;
+  let mouse = [e.clientX - setUp.width/2, e.clientY - setUp.height/2];
+  let distance = Math.sqrt(mouse[0]*mouse[0] + mouse[1]*mouse[1]);
+  let thresh = 100;
+  let mult = distance < thresh ? distance / thresh : 1
+  dx = mouse[0] / distance * mult;
+  dy = mouse[1] / distance * mult;
+  mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
+  console.log(mpos)
+})
+
 
 start();

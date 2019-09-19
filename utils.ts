@@ -46,8 +46,8 @@ export class setUp {
   public static square  = 50;
   public static width = WIDTH;
   public static height = HEIGHT;
-  public static mapwidth = (setUp.width/setUp.square) * setUp.square;
-  public static mapheight = (setUp.height / setUp.square) * setUp.square;
+  public static mapwidth = 100 * setUp.square//(setUp.width/setUp.square) * setUp.square;
+  public static mapheight = 20 * setUp.square//(setUp.height / setUp.square) * setUp.square;
   public static borderLeft = 0;
   public static borderRight = setUp.mapwidth;
   public static borderTop = 0;

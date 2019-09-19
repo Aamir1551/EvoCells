@@ -28,21 +28,13 @@ export class Cell extends GameObject{
     
   public movePoints() : void {
     let n = this.vertices.length;
-    let clonedVertices: Array<Vertex> = [];
-    for(let q = 0; q<this.vertices.length; q++) {
-      let currentVertex = this.vertices[q];
-      clonedVertices.push(new Vertex(currentVertex.objectPointer, new Point(currentVertex.position.x, currentVertex.position.y), currentVertex.distance, currentVertex.velocity));
-      clonedVertices[q].colliding = currentVertex.colliding;
-    }
     
-    for(let i=0; i<clonedVertices.length; i++) {
+    for(let i=0; i<this.vertices.length; i++) {
       let limit = 10;
       let [current, before, after] : [Vertex, Vertex, Vertex] = [this.vertices[i], this.vertices[(i-1+n) % n], this.vertices[(i + 1) % n]];
       let acc = (before.velocity + after.velocity + 8*Math.min(Math.max((current.velocity+Math.random()-0.5)*0.7, -limit), limit))/10.0;
 
-      let collision : boolean = clonedVertices[i].colliding;
-      //let collision : boolean = this.isTouchingSmallerCell() || !clonedVertices[i].position.isInside() || this.eatSugar();
-      //let collision : boolean = (this.cellType == "CELL" && this.detectCollisionForVertex(clonedVertices[i]));
+      let collision : boolean = this.vertices[i].colliding;
       
       let accAdd  = collision ? Math.min(acc, 0) - 1 : acc;
       let radius = (before.distance + after.distance + 8 * (9 * Math.max(current.distance + acc, 0) + this.size) / 10) / 10
@@ -57,6 +49,7 @@ export class Cell extends GameObject{
 
   public moveXY(time:number) : void{
 
+    let a = 10.0;
     let [cx, cy]  = bezierCurve(this.points[0], this.points[1], this.points[2], this.points[3], time);
     let mouse = [cx - setUp.width/2, cy - setUp.height/2];
     let distance = Math.sqrt(mouse[0]*mouse[0] + mouse[1]*mouse[1]);
@@ -64,8 +57,6 @@ export class Cell extends GameObject{
     let mult = distance < thresh ? distance / thresh : 1
     this.directionX = mouse[0] / distance * mult;
     this.directionY = mouse[1] / distance * mult;
-
-    let a= 4.0;
   
     this.position = new Point(Math.max(Math.min(this.position.x + a * this.directionX, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(this.position.y + a * this.directionY, setUp.borderBottom), setUp.borderTop))
   }
