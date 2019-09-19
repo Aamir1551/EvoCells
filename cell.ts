@@ -1,138 +1,72 @@
-import {getRandomPositionOnCanvas, bezierCurve, sineCircleXYatAngle} from './utils'
+import {Point, Vertex, bezierCurve, getRandomPositionOnCanvas, setUp} from './utils'
+import {GameObject} from './gameObject'
 
+export class Cell extends GameObject{
+  private static cellCount = 0;
+  public readonly cellID:number;
+  public vertices:Array<Vertex> = [];
+  public readonly distanceThreshold = 25;
+  protected initialAngle:number = Math.random() * setUp.TAU;
+  public directionX : number = 0;
+  public directionY : number = 0;
+  public points:[[number, number], [number, number], [number, number], [number, number]]; 
 
-//make Sure the amount of food in system goes down, AND MAKE SURE MASS IS NOT MADE PROPORTIONAL TO THE RADIUS!!!
+  constructor(position:Point, size:number, color:[number, number, number]) {
+    super(position, color, size);
+    this.updatePoints();
+    this.cellID = Cell.cellCount;
+    for(let i=0; i<Math.ceil(this.size); i++) {
+      this.vertices.push(new Vertex(this, this.position, this.size, Math.random() - 0.5))
+    }
+    Cell.cellCount++;
+  }
 
-export class Cell {
+  public eatFood(massEaten : number) {
+    this.size = Math.sqrt((Math.pow(this.size, 2) * Math.PI+ massEaten)/Math.PI);
+  }
+
     
-    constructor(public readonly DNA:[number, number, number, number], public readonly DNAcolors:[string, string, string, string]) {
-        for(let i =0; i<this.DNA.length; i++) {
-            this.DNAMagnitude += this.DNA[i];
-        }
-        this.mass = 50;
-        this.targetMass = 50;
-        this.foodCollected = 50;
+  public movePoints() : void {
+    let n = this.vertices.length;
+    let clonedVertices: Array<Vertex> = [];
+    for(let q = 0; q<this.vertices.length; q++) {
+      let currentVertex = this.vertices[q];
+      clonedVertices.push(new Vertex(currentVertex.objectPointer, new Point(currentVertex.position.x, currentVertex.position.y), currentVertex.distance, currentVertex.velocity));
+      clonedVertices[q].colliding = currentVertex.colliding;
     }
     
-    public health : number = 100;
-    public foodCollected : number = 50;
-    public DNAMagnitude : number = 0;
-    public position:[number, number] = getRandomPositionOnCanvas();
-    public isAlive:boolean = true;
-    public covered:number = 0;
-    public p0:[number, number] = this.position;
-    public p1:[number, number] = getRandomPositionOnCanvas();
-    public p2:[number, number] = getRandomPositionOnCanvas();
-    public p3:[number, number] = getRandomPositionOnCanvas();
-    public color:[number, number, number] = [Math.round(Math.random()*255), Math.round(Math.random() * 255), Math.round(Math.random() * 255)];
-    public mass:number = 5;
-    public immuneStrength:number;
-    public speed:number;
-    public targetMass:number;
+    for(let i=0; i<clonedVertices.length; i++) {
+      let limit = 10;
+      let [current, before, after] : [Vertex, Vertex, Vertex] = [this.vertices[i], this.vertices[(i-1+n) % n], this.vertices[(i + 1) % n]];
+      let acc = (before.velocity + after.velocity + 8*Math.min(Math.max((current.velocity+Math.random()-0.5)*0.7, -limit), limit))/10.0;
 
-    public useEnergy() : void {
-        let [speed, immunseStrength, mass, metabolicRate] = this.DNA;
-        let scale = (this.foodCollected) / this.DNAMagnitude * metabolicRate;
-        this.speed = speed * scale;
-        this.immuneStrength = immunseStrength * scale;
-        this.mass = Math.sqrt(scale) * mass; //take good care when changing these values, as the cells can just blow up
-        this.foodCollected -= 0.02;
+      let collision : boolean = clonedVertices[i].colliding;
+      //let collision : boolean = this.isTouchingSmallerCell() || !clonedVertices[i].position.isInside() || this.eatSugar();
+      //let collision : boolean = (this.cellType == "CELL" && this.detectCollisionForVertex(clonedVertices[i]));
+      
+      let accAdd  = collision ? Math.min(acc, 0) - 1 : acc;
+      let radius = (before.distance + after.distance + 8 * (9 * Math.max(current.distance + acc, 0) + this.size) / 10) / 10
+      let angle = setUp.TAU * i / n + this.initialAngle;
+      this.vertices[i] = new Vertex(this, new Point(this.position.x + Math.cos(angle) * radius, this.position.y + Math.sin(angle) * radius), radius, accAdd);
     }
-    
-    public cellDivide() : [Cell, Cell] {
-        let child1 = new Cell(this.DNA, this.DNAcolors);
-        let child2 = new Cell(this.DNA, this.DNAcolors);
-        child1.mass = this.mass;
-        child2.mass = this.mass;
-        child1.targetMass = this.mass /2;
-        child2.targetMass = this.mass /2;
-        child1.foodCollected = this.foodCollected/2;
-        child2.foodCollected = this.foodCollected/2;
-        child1.position = this.position;
-        child2.position = this.position;
-        this.isAlive = false;
-        return [child1, child2]
-    }
-    
-    public eatCell(otherCell : Cell) : void {
-        this.foodCollected += otherCell.getProteinValue();
-        otherCell.isAlive = false;
-   }
-   
-   public draw(canvas:HTMLCanvasElement):void {
-       
-    let ctx = canvas.getContext("2d");
-       /*ctx.beginPath();
-       ctx.arc(this.position[0], this.position[1], this.mass, 0, 2*Math.PI);
-       ctx.fillStyle = this.color; 
-       ctx.fill();
-       ctx.fillStyle = "black";
-       ctx.textAlign = "center";
-       ctx.fillText(Math.round(this.foodCollected).toString(), this.position[0], this.position[1]);
-       ctx.closePath()*/
-       
-       ctx.beginPath();
-       for(let i=0;i<360;i++){
-           let angle=(i)*Math.PI/180 ;
-           let pt=sineCircleXYatAngle(this.position[0],this.position[1],this.mass,(3+Math.random()*1.8)/100 * this.mass,angle,5);
-           ctx.lineTo(pt.x,pt.y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-        ctx.fillStyle = "rgb(" + this.color[0].toString() + "," + this.color[1].toString()  + "," + this.color[2].toString() + ")"
-        ctx.fill();
-        ctx.lineWidth = 27 / 100 * this.mass;
-        ctx.strokeStyle = "rgb(" + this.color[0].toString() + "," + this.color[1].toString()  + "," + this.color[2].toString() + ")"
-        console.log(ctx.fillStyle, ctx.strokeStyle)
-        //this.drawDNA(canvas);
-    }
+  }
 
-   public drawDNA(canvas:HTMLCanvasElement) : void {
-        let colorPercentages = [0];
-        for(let i=0; i<this.DNA.length; i++) {
-            colorPercentages.push(this.DNA[i] * Math.PI * 2 / this.DNAMagnitude + colorPercentages[i]);
-            this.drawBorder(canvas, this.DNAcolors[i], colorPercentages[i], colorPercentages[i+1], 2);
-        }
-   }
+  public updatePoints() : void {
+    this.points = [getRandomPositionOnCanvas(), getRandomPositionOnCanvas(), getRandomPositionOnCanvas(), getRandomPositionOnCanvas()]
+  }
 
+  public moveXY(time:number) : void{
 
-   public drawBorder(canvas:HTMLCanvasElement, color:string, start:number = 0, end:number = Math.PI * 2, lineWidth:number) : void {
-       let ctx = canvas.getContext("2d");
-       ctx.beginPath();
-       ctx.arc(this.position[0], this.position[1], this.mass, start, end);
-       ctx.strokeStyle = color;
-       ctx.lineWidth = lineWidth;
-       ctx.stroke();
-       ctx.closePath();
-   }
+    let [cx, cy]  = bezierCurve(this.points[0], this.points[1], this.points[2], this.points[3], time);
+    let mouse = [cx - setUp.width/2, cy - setUp.height/2];
+    let distance = Math.sqrt(mouse[0]*mouse[0] + mouse[1]*mouse[1]);
+    let thresh = 100;
+    let mult = distance < thresh ? distance / thresh : 1
+    this.directionX = mouse[0] / distance * mult;
+    this.directionY = mouse[1] / distance * mult;
 
-   public static fight(cell1:Cell, cell2:Cell) {
-       let eatRatio = 1;
-       cell1.mass > cell2.mass * eatRatio  ? cell1.eatCell(cell2) : cell2.mass > cell1.mass * eatRatio ? cell2.eatCell(cell1) : null;
-   }
-
-   public getProteinValue(): number {
-       return this.mass* 0.7;
-   }
-
-   public move():void {
-       this.useEnergy();
-       this.isAlive = this.mass >0 && this.targetMass > 0;
-       if(this.covered > 0.8) {
-           this.covered = 0;
-       }
-       this.mass += (this.targetMass - this.mass) * 0.9;
-
-       if(this.covered == 0) {
-           //pick new bezierpoints
-           this.p0 = this.position;
-           this.p1 = this.p3 ;
-           this.p2 = getRandomPositionOnCanvas();
-           this.p3 = getRandomPositionOnCanvas();
-       }
-       
-       this.covered += 0.001 * this.speed / this.mass;
-       this.position = bezierCurve(this.p0, this.p1, this.p2, this.p3, this.covered);
-   }
-
+    let a= 4.0;
+  
+    this.position = new Point(Math.max(Math.min(this.position.x + a * this.directionX, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(this.position.y + a * this.directionY, setUp.borderBottom), setUp.borderTop))
+  }
 }

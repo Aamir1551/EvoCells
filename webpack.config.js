@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    entry: path.join(__dirname, 'bacterium.ts'),
+    entry: path.join(__dirname, './environment.ts'),
     output: {
         path: path.join(__dirname, '/dist'),
         filename: 'bundle.min.js'

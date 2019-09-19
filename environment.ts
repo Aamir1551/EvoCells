@@ -1,108 +1,118 @@
-import {Cell} from "./cell"
-import {getRandomPositionOnCanvas} from "./utils" 
+import {Cell} from './cell'
+import {setUp, Point} from './utils'
+import {Sugar} from './sugar'
 
-var width = 1800;
-var height = 700;
+var canvas:HTMLCanvasElement=document.getElementsByTagName("canvas")[0];
+var ctx=canvas.getContext("2d");
 
+export class Environment {
+  
+  public food:Array<Sugar>;
+  public cells:Array<Cell>;
+  public timeCounter = 0;
 
-class Environment {
-    
-    public cells : Array<Cell> = [];
-    public petriDish : Array<[string, number, number, number, number, number]> = [];
+  constructor(food:Array<Sugar> = [], cells:Array<Cell> = [], public ctx:CanvasRenderingContext2D) {
+    [this.food, this.cells] = [food, cells]
+  }
+  
+  public drawAllObjects() {
+    for(let i=0; i<this.food.length; i++) {
+      this.food[i].draw(ctx);
+    }
+    for(let i=0; i<this.cells.length; i++) {
+      this.cells[i].draw(ctx);
+    }
+  }
 
-    constructor(public numCells:number, public canvas:HTMLCanvasElement) {
-        for(let i:number = 0; i<numCells; i++) {
-            this.cells.push(new Cell([Math.random(), Math.random() , Math.random(), Math.random()], ["#000000", "#FF0000", "#FFFF00", "#d54dff"]));
-        }
-        this.addFoodToPlace(100);
-    }
+  public detectAllCellCollisions() : void{
+    this.cells.forEach(x=>x.vertices.forEach(y=>y.colliding = false))
     
-    public addFoodToPlace(foodCount:number):void {
-        for(let i=0; i<foodCount; i++) {
-            let color:string = ["#000000", "#FF0000", "FFFF00"][Math.round(Math.random() * 2)];
-            let p = getRandomPositionOnCanvas();
-            this.petriDish.push([color, p[0], p[1], Math.random(), Math.random(), Math.random() * 3 +1]);
-        }
-    }
-    
-    public updatePetri() : void {
-        for(let i=0; i<this.cells.length; i++) {
-            for(let j=0; j<this.petriDish.length; j++) {
-                if(Math.sqrt(Math.pow(this.cells[i].position[0] - this.petriDish[j][1],2) + Math.pow(this.cells[i].position[1] - this.petriDish[j][2],2)) < this.cells[i].mass + 4) {
-                    this.cells[i].foodCollected++;
-                    this.petriDish.splice(j, 1)
-                }
-            }
-        }
-    }
-    
-    public detectCollisions():Array<[Cell, Cell]> {
-        let crashes:Array<[Cell, Cell]> = [];
-        for(let i:number=0; i<this.cells.length-1; i++) {
-            for(let j=i+1; j<this.cells.length; j++) {
-                if(Math.sqrt(Math.pow(this.cells[i].position[0] - this.cells[j].position[0],2) + Math.pow(this.cells[i].position[1] - this.cells[j].position[1],2)) - this.cells[i].mass - this.cells[j].mass<-Math.min(this.cells[i].mass, this.cells[j].mass) * 0.4) {
-                    crashes.push([this.cells[i], this.cells[j]]);
-                }
-            }
-        }
-        return crashes;
-    }
-    
-    public iterate():void {
-        this.canvas.getContext("2d").fillStyle = "#d2d6d6"
-        this.canvas.getContext("2d").fillRect(0, 0, this.canvas.width, this.canvas.height);
-        let cellCollisions:Array<[Cell, Cell]> = this.detectCollisions();
-        this.updatePetri();
-        for(let i=0; i<this.petriDish.length; i++) {
-            this.petriDish[i][1] += this.petriDish[i][3];
-            this.petriDish[i][2] += this.petriDish[i][4];
-            if(this.petriDish[i][1] > 1800) {
-                this.petriDish[i][3] = -1;
-            } else if(this.petriDish[i][1] < 0) {
-                this.petriDish[i][3] = 1;
-            } else {
-                this.petriDish[i][3] *= 1 + (Math.random() * 0.005);
-            }
-            if(this.petriDish[i][2] > 700) {
-                this.petriDish[i][4] = -1;
-            } else if(this.petriDish[i][2] < 0) {
-                this.petriDish[i][4] = 1;
-            } else {
-                this.petriDish[i][4] *= 1 + (Math.random() * 0.005);
-            }
-            let ctx = this.canvas.getContext("2d");
-            ctx.beginPath();
-            ctx.arc(this.petriDish[i][1], this.petriDish[i][2], this.petriDish[i][5], 0, 2*Math.PI);
-            ctx.fillStyle =  this.petriDish[i][0];
-            ctx.closePath();
-            ctx.fill();
-        }
+    for(let i=0; i<this.cells.length; i++) {
+      let currentCell : Cell = this.cells[i];
+      let distanceThreshold = currentCell.distanceThreshold;
+      
+      for(let j=0; j<currentCell.vertices.length; j++) {
+        let currentVertex = currentCell.vertices[j];
+        currentVertex.colliding = false;
+        if(!currentVertex.position.isInside()) {currentVertex.colliding = true; continue}
 
-        for(let i=0; i<this.cells.length; i++) {
-           this.cells[i].move();
-           if(this.cells[i].foodCollected > 300) {
-               let [a, b] = this.cells[i].cellDivide();
-               this.cells.push(a);
-               this.cells.push(b);
-               this.cells.splice(i, 1);
-            }
-            if(this.cells[i].isAlive) {
-                this.cells[i].draw(this.canvas);
-            } else {
-                this.cells.splice(i, 1);
-            }
+        for(let k = 0; k<this.food.length; k++) {
+          let dist = currentVertex.position.distanceSquared(this.food[i].position);
+          if(dist <= distanceThreshold) {
+            this.food.splice(j, 1) 
+            currentCell.eatFood(10)
+          }
         }
-        for(let i=0; i<cellCollisions.length; i++) {
-            Cell.fight(cellCollisions[i][0], cellCollisions[i][1]);
+        
+        for(let k=i+1; k<this.cells.length; k++) {
+          let otherCell : Cell= this.cells[k];
+          for(let l=0; l<this.cells[k].vertices.length; l++) {
+            let otherCellVertex = this.cells[k].vertices[l];
+            let dist = otherCellVertex.position.distanceSquared(currentVertex.position);
+            if(dist <= distanceThreshold){ [currentVertex.colliding, otherCellVertex.colliding] = [false, false] }
+
+            if( -dist / 2 >= 0.7 * otherCell.size && currentCell.size > otherCell.size) {
+              currentCell.eatFood(otherCell.size * otherCell.size * Math.PI);
+            } //eat it
+          }
         }
-        setTimeout(this.iterate.bind(this), 1000/60);
+      }
     }
+  }
+  
+  public drawBackground() : void {
+    let corner = new Point(setUp.center.x - setUp.width/2, setUp.center.y - setUp.height/2);
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.rect(0, 0, setUp.width, setUp.height);
+    ctx.fill();
+    ctx.strokeStyle = "lightgray"; 
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0; i<Math.floor(setUp.width/setUp.square) + 1; i++) {
+      let j = i * setUp.square - (corner.x  % setUp.square);
+      ctx.moveTo(j, 0);
+      ctx.lineTo(j, setUp.height);
+    }
+    for(let i=0; i<Math.floor(setUp.height/setUp.square) + 1; i++) {
+      let j = i * setUp.square - (corner.y  % setUp.square);
+      ctx.moveTo(0, j);
+      ctx.lineTo(setUp.width, j);
+    }
+    ctx.stroke();
+  } 
+
+  public iterate() {
+    this.timeCounter+=0.01
+
+    if(this.timeCounter>=1) {
+      this.cells.forEach(x=>x.updatePoints());
+      this.timeCounter = 0;
+    }
+
+    this.cells.forEach(x=>x.moveXY(this.timeCounter))
+    setUp.center = new Point(setUp.mapwidth/2, setUp.mapheight/2);
+
+    this.drawBackground();
+    this.drawAllObjects();
+  }
+}
+
+let petri = new Environment([], [], ctx)
+
+for(let i=0; i<10; i++) {
+  petri.cells.push(new Cell(new Point(Math.random() * canvas.width, Math.random() * canvas.height), Math.random() * 50 + 70, [Math.random() * 255, Math.random() * 255, Math.random() * 255]));
+}
+
+for(let i=0; i<50; i++) {
+  petri.food.push(new Cell(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), 5, [0,0,0]));
 }
 
 function start() {
-    let canvas = document.getElementsByTagName("canvas")[0];
-    let petri:Environment = new Environment(10, canvas);
-    petri.iterate();
+
+  petri.iterate();
+
+  setTimeout(start, 1000/60) 
 }
 
 start();

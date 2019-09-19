@@ -1,5 +1,4 @@
-import {setUp} from './bacterium' //do check this, as this has been done to avoid circular dependencies
-import {Cell} from './bacterium'
+import {GameObject} from './gameObject' //do check this, as this has been done to avoid circular dependencies
 
 const WIDTH : number = 1800;
 const HEIGHT : number = 700;
@@ -37,7 +36,23 @@ export class Point {
     }
 }
 
-
 export class Vertex {
-    constructor(public cellPointer:Cell, public position:Point, public distance:number, public velocity:number){};
+    public colliding : boolean = false;
+    constructor(public objectPointer:GameObject, public position:Point, public distance:number, public velocity:number){};
+}
+
+export class setUp {
+  public static readonly TAU = Math.PI * 2;
+  public static square  = 50;
+  public static width = WIDTH;
+  public static height = HEIGHT;
+  public static mapwidth = (setUp.width/setUp.square) * setUp.square;
+  public static mapheight = (setUp.height / setUp.square) * setUp.square;
+  public static borderLeft = 0;
+  public static borderRight = setUp.mapwidth;
+  public static borderTop = 0;
+  public static borderBottom = setUp.mapheight;
+  public static center =  new Point(setUp.mapwidth/2, setUp.mapheight/2);
+  public static directionX = 0;
+  public static directionY = 0;
 }

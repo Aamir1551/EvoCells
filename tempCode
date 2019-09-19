@@ -111,3 +111,120 @@ canvas.addEventListener("mousemove", (e)=>{
   directionX = mouse[0] / distance * mult;
   directionY = mouse[1] / distance * mult;
 })*/
+
+
+
+
+
+
+
+
+
+    /*for(let i=0; i<setUp.allVertices.length; i++) {
+      let dist = v.position.distanceSquared(setUp.allVertices[i].position)
+      if(dist <= this.distanceThreshold && setUp.allVertices[i].objectPointer.cellID != v.cellPointer.cellID){
+
+        if(dist<= this.distanceThreshold/4 && setUp.allVertices[i].cellPointer.cellType == "FOOD" && setUp.allVertices[i].cellPointer.isActive) {
+          setUp.allVertices[i].cellPointer.isActive = false;
+          v.cellPointer.size = Math.sqrt((v.cellPointer.size* v.cellPointer.size * Math.PI+ 10)/Math.PI);
+        }
+
+        let l = setUp.allVertices[i].cellPointer
+        dist = (l.size + v.cellPointer.size) - v.cellPointer.position.distanceSquared(l.position);
+
+        if(dist/2 >= 0.7*l.size && setUp.allVertices[i].cellPointer.cellType == "CELL" && setUp.allVertices[i].cellPointer.size < v.cellPointer.size && setUp.allVertices[i].cellPointer.isActive) {
+          setUp.allVertices[i].cellPointer.isActive = false;
+          v.cellPointer.size = Math.sqrt(Math.pow(v.cellPointer.size, 2) + Math.pow(setUp.allVertices[i].cellPointer.size, 2));
+        }
+        return true;
+      };
+    }
+    return false;
+  }
+        
+      }
+    }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /*public isTouchingSmallerCell() : boolean {
+    for(let i=0; i<setUp.cells.length; i++) {
+      let otherCell: Cell = setUp.cells[i];
+      if(otherCell.cellID==this.cellID|| otherCell.isActive == false || this.size < otherCell.size){continue}
+      let dist = ((otherCell.size + this.size) - this.position.distanceSquared(otherCell.position)) / 2;
+      if(dist >= 0.7 * otherCell.size) {
+          setUp.cells[i].isActive = false;
+          this.size = Math.sqrt(Math.pow(this.size, 2) + Math.pow(otherCell.size, 2));
+          return true
+      }
+    }
+    return false;
+  }*/
+
+
+
+
+/*for(let i=0; i<setUp.sugar.length; i++) {
+      let dist = this.position.distanceSquared(setUp.sugar[i].position);
+      //console.log(dist)
+      if(dist < 0.000001 && setUp.sugar[i].isActive) {
+        alert(dist)
+        setUp.sugar[i].isActive = false;
+        this.size = Math.sqrt((Math.pow(this.size, 2) * Math.PI+ 10)/Math.PI);
+        return true;
+      }
+    }
+    return false;
+  }*/
+
+  /*
+  //Returns True when there is a collision
+  public detectCollisionForVertex(v:Vertex) : boolean {
+    if(v.position.isInside() == false) {
+      return true;
+    }
+    for(let i=0; i<setUp.allVertices.length; i++) {
+      let dist = v.position.distanceSquared(setUp.allVertices[i].position)
+      if(dist <= this.distanceThreshold && setUp.allVertices[i].objectPointer.cellID != v.cellPointer.cellID){
+
+        if(dist<= this.distanceThreshold/4 && setUp.allVertices[i].cellPointer.cellType == "FOOD" && setUp.allVertices[i].cellPointer.isActive) {
+          setUp.allVertices[i].cellPointer.isActive = false;
+          v.cellPointer.size = Math.sqrt((v.cellPointer.size* v.cellPointer.size * Math.PI+ 10)/Math.PI);
+        }
+
+        let l = setUp.allVertices[i].cellPointer
+        dist = (l.size + v.cellPointer.size) - v.cellPointer.position.distanceSquared(l.position);
+
+        if(dist/2 >= 0.7*l.size && setUp.allVertices[i].cellPointer.cellType == "CELL" && setUp.allVertices[i].cellPointer.size < v.cellPointer.size && setUp.allVertices[i].cellPointer.isActive) {
+          setUp.allVertices[i].cellPointer.isActive = false;
+          v.cellPointer.size = Math.sqrt(Math.pow(v.cellPointer.size, 2) + Math.pow(setUp.allVertices[i].cellPointer.size, 2));
+        }
+        return true;
+      };
+    }
+    return false;
+  }*/
