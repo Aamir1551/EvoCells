@@ -10,9 +10,11 @@ export class Cell extends GameObject{
   public directionX : number = 0;
   public directionY : number = 0;
   public points:[[number, number], [number, number], [number, number], [number, number]]; 
+  public targetSize = 0;
 
   constructor(position:Point, size:number, color:[number, number, number]) {
     super(position, color, size);
+    this.targetSize = this.size;
     this.updatePoints();
     this.cellID = Cell.cellCount;
     for(let i=0; i<Math.ceil(this.size); i++) {
@@ -22,7 +24,16 @@ export class Cell extends GameObject{
   }
 
   public eatFood(massEaten : number) {
-    this.size = Math.sqrt((Math.pow(this.size, 2) * Math.PI+ massEaten)/Math.PI);
+    this.targetSize = Math.sqrt((Math.pow(this.targetSize, 2) * Math.PI+ massEaten)/Math.PI);
+  }
+
+  public split() : [Cell, Cell] {
+    let a = new Cell(this.position, this.size, this.color);
+    let b = new Cell(this.position, this.size, this.color);
+    let newSize = Math.sqrt((Math.pow(this.targetSize, 2) * Math.PI / 2) / Math.PI);
+    a.targetSize =  newSize;
+    b.targetSize = newSize;
+    return [a, b];
   }
 
     
@@ -30,6 +41,7 @@ export class Cell extends GameObject{
     let n = this.vertices.length;
     
     for(let i=0; i<this.vertices.length; i++) {
+      this.size += (this.targetSize - this.size) * 0.2;
       let limit = 10;
       let [current, before, after] : [Vertex, Vertex, Vertex] = [this.vertices[i], this.vertices[(i-1+n) % n], this.vertices[(i + 1) % n]];
       let acc = (before.velocity + after.velocity + 8*Math.min(Math.max((current.velocity+Math.random()-0.5)*0.7, -limit), limit))/10.0;

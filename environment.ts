@@ -16,20 +16,37 @@ export class Environment {
   constructor(food:Array<Sugar> = [], cells:Array<Cell> = [], public ctx:CanvasRenderingContext2D) {
     [this.food, this.cells] = [food, cells]
   }
+
   
   public drawAllObjects() {
     for(let i=0; i<this.food.length; i++) {
       this.food[i].draw(ctx);
     }
     
-    this.cells.sort((a, b)=> b.size - a.size)
+    this.cells.sort((b, a)=> b.targetSize - a.targetSize)
     for(let i=0; i<this.cells.length; i++) {
       this.cells[i].draw(ctx);
     }
   }
   
+  
   public detectAllCellCollisions() : void{
     this.cells.forEach(x=>x.vertices.forEach(y=>y.colliding = false))
+    this.iterateConsume();
+
+
+    for(let i=0; i<this.cells.length; i++) {
+      let currentCell = this.cells[i];
+      if(currentCell.targetSize > 270) {
+        this.cells.splice(i, 1)
+        let s = currentCell.split();
+        this.cells.push(s[0]);
+        this.cells.push(s[1]);
+
+      } 
+    }
+
+    
     for(let i=0; i<this.cells.length; i++) {
       let currentCell : Cell = this.cells[i];
       let distanceThreshold = currentCell.distanceThreshold;
@@ -45,20 +62,35 @@ export class Environment {
             currentCell.eatFood(10)
           }
         }
-        
+         
         for(let k=i+1; k<this.cells.length; k++) {
           let otherCell : Cell= this.cells[k];
           for(let l=0; l<otherCell.vertices.length; l++) {
             let otherCellVertex = otherCell.vertices[l];
             let dist = otherCellVertex.position.distanceSquared(currentVertex.position);
             if(dist <= distanceThreshold){ [currentVertex.colliding, otherCellVertex.colliding] = [true, true] }
-            if((dist <= distanceThreshold /4) && currentCell.size > otherCell.size * 1.2) {
-              currentCell.eatFood(otherCell.size * otherCell.size * Math.PI);
-              this.cells.splice(k, 1);
-            } 
+            dist = otherCell.position.distanceSquared(currentVertex.position);
           }
         }
       }
+    }
+  }
+
+
+  public iterateConsume() {
+    this.cells.sort((a,b) => (b.size - a.size)); //rearranges the cells with the cell that has the bigger size //put this in the constructor
+    //make an initiate functiont that reorders the cells in the right order
+    for(let i=0; i<this.cells.length -1; i++) { //loop to i-1 as smallest cell will not be colliding with anyone
+      let currentCell = this.cells[i];
+      for(let j=i+1; j<this.cells.length;j++) {
+        let otherCell = this.cells[j];
+        let dist = currentCell.position.distanceSquared(otherCell.position) - currentCell.size - otherCell.size;
+        if( -dist > otherCell.size && currentCell.size > otherCell.size * 1.2) {
+          currentCell.eatFood(otherCell.size * otherCell.size * Math.PI);
+          this.cells.splice(j, 1);
+        }
+      }
+      
     }
   }
   
@@ -85,6 +117,7 @@ export class Environment {
   } 
   
   public iterate() {
+    setUp.center = new Point(setUp.mapwidth/2, setUp.mapheight/2);
     this.timeCounter+=0.01
     if(this.timeCounter>=1) {
       this.cells.forEach(x=>x.updatePoints());
@@ -92,11 +125,10 @@ export class Environment {
     }
     this.cells.forEach(x=>x.moveXY(this.timeCounter))
     let a = 10 
-    mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
-    setUp.center = mpos//= new Point(setUp.mapwidth/2, setUp.mapheight/2);
     this.drawBackground();
     this.drawAllObjects();
     this.detectAllCellCollisions();
+    //mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
   }
 }
 
@@ -122,7 +154,7 @@ function start() {
 
 
 
-
+/*
 canvas.addEventListener("mousemove", (e:MouseEvent) => {
  let a = 2;
   let mouse = [e.clientX - setUp.width/2, e.clientY - setUp.height/2];
@@ -133,7 +165,7 @@ canvas.addEventListener("mousemove", (e:MouseEvent) => {
   dy = mouse[1] / distance * mult;
   mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
   console.log(mpos)
-})
+})*/
 
 
 start();

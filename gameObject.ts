@@ -6,6 +6,7 @@ export abstract class GameObject {
   protected initialAngle:number;
   constructor(public position:Point, public color:[number, number, number], public size : number){};
 
+
   public draw(ctx:CanvasRenderingContext2D) : void {
     let corner = new Point(setUp.center.x - setUp.width /2, setUp.center.y - setUp.height / 2);
     this.movePoints();
