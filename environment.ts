@@ -68,6 +68,12 @@ export class Environment {
 
   public iterateConsume() {
     this.cells.sort((a,b) => (b.size - a.size)); 
+    this.cells.forEach(x=>x.looseMass())
+    for(let i=0; i<this.cells.length; i++) {
+      if(this.cells[i].targetSize < 5) {
+        this.cells.splice(i, 1);
+      }
+    }
     for(let i=0; i<this.cells.length -1; i++) { 
       let currentCell = this.cells[i];
       for(let j=i+1; j<this.cells.length;j++) {
@@ -121,7 +127,7 @@ export class Environment {
 
 let petri = new Environment([], [], ctx)
 
-for(let i=0; i<10; i++) {
+for(let i=0; i<30; i++) {
   petri.cells.push(new Cell(new Point(Math.random() * setUp.mapwidth, Math.random() * setUp.mapheight), Math.random() * 20 + 30, [Math.random() * 255, Math.random() * 255, Math.random() * 255], [Math.random(), Math.random(), Math.random()])); }
 
 for(let i=0; i<500; i++) {
@@ -131,26 +137,28 @@ for(let i=0; i<500; i++) {
 function start() {
   petri.iterate();
 
-  if(petri.timeCounter % 300 == 0) {
+  if(petri.timeCounter % 1 == 0) {
     let l= petri.cells.length;
     let n : Array<Cell> = [];
   for(let i=0; i<petri.cells.length; i++) {
-    console.log("j")
       let currentCell = petri.cells[i];
+      currentCell.updatePoints(petri.cells, petri.food);
+      
     if(currentCell.size > 100) {
         //petri.cells.splice(i, 1)
         let s = currentCell.split();
         s[0].updatePoints(petri.cells, petri.food);
         s[1].updatePoints(petri.cells, petri.food);
+        s[0].points[0][0] *=-1;
+        s[0].points[0][1] *=-1;
         n.push(s[0])
-        n.push(s[0])
+        n.push(s[1])
         //petri.cells.push(s[0]);
         //petri.cells.push(s[1]);
 
       } else {n.push(currentCell)}
     }
         petri.cells = n;
-      console.log(9)
     }
   if(petri.food.length < 400) {
     for(let i=0; i<200; i++) {
