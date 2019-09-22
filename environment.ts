@@ -4,9 +4,6 @@ import {Sugar} from './sugar'
 
 var canvas:HTMLCanvasElement=document.getElementsByTagName("canvas")[0];
 var ctx=canvas.getContext("2d");
-let dx = 0;
-let dy = 0;
-let mpos : Point = new Point(0,0)
 export class Environment {
   
   public food:Array<Sugar> = [];
@@ -15,6 +12,10 @@ export class Environment {
   
   constructor(food:Array<Sugar> = [], cells:Array<Cell> = [], public ctx:CanvasRenderingContext2D) {
     [this.food, this.cells] = [food, cells]
+  }
+
+  public initialize() {
+    this.cells.forEach(x=>x.updatePoints(this.cells, this.food));
   }
 
   
@@ -34,18 +35,7 @@ export class Environment {
     this.cells.forEach(x=>x.vertices.forEach(y=>y.colliding = false))
     this.iterateConsume();
 
-
-    for(let i=0; i<this.cells.length; i++) {
-      let currentCell = this.cells[i];
-      if(currentCell.targetSize > 270) {
-        this.cells.splice(i, 1)
-        let s = currentCell.split();
-        this.cells.push(s[0]);
-        this.cells.push(s[1]);
-
-      } 
-    }
-
+    
     
     for(let i=0; i<this.cells.length; i++) {
       let currentCell : Cell = this.cells[i];
@@ -76,11 +66,9 @@ export class Environment {
     }
   }
 
-
   public iterateConsume() {
-    this.cells.sort((a,b) => (b.size - a.size)); //rearranges the cells with the cell that has the bigger size //put this in the constructor
-    //make an initiate functiont that reorders the cells in the right order
-    for(let i=0; i<this.cells.length -1; i++) { //loop to i-1 as smallest cell will not be colliding with anyone
+    this.cells.sort((a,b) => (b.size - a.size)); 
+    for(let i=0; i<this.cells.length -1; i++) { 
       let currentCell = this.cells[i];
       for(let j=i+1; j<this.cells.length;j++) {
         let otherCell = this.cells[j];
@@ -120,7 +108,7 @@ export class Environment {
     setUp.center = new Point(setUp.mapwidth/2, setUp.mapheight/2);
     this.timeCounter+=0.01
     if(this.timeCounter>=1) {
-      this.cells.forEach(x=>x.updatePoints());
+      this.cells.forEach(x=>x.updatePoints(this.cells, this.food));
       this.timeCounter = 0;
     }
     this.cells.forEach(x=>x.moveXY(this.timeCounter))
@@ -128,44 +116,50 @@ export class Environment {
     this.drawBackground();
     this.drawAllObjects();
     this.detectAllCellCollisions();
-    //mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
   }
 }
 
 let petri = new Environment([], [], ctx)
 
-for(let i=0; i<30; i++) {
-  petri.cells.push(new Cell(new Point(Math.random() * setUp.mapwidth, Math.random() * setUp.mapheight), Math.random() * 50 + 70, [Math.random() * 255, Math.random() * 255, Math.random() * 255]));
-}
+for(let i=0; i<10; i++) {
+  petri.cells.push(new Cell(new Point(Math.random() * setUp.mapwidth, Math.random() * setUp.mapheight), Math.random() * 20 + 30, [Math.random() * 255, Math.random() * 255, Math.random() * 255], [Math.random(), Math.random(), Math.random()])); }
 
-for(let i=0; i<50; i++) {
-  petri.food.push(new Cell(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), 5, [0,0,0]));
+for(let i=0; i<500; i++) {
+  petri.food.push(new Sugar(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), [0,0,0])); 
 }
 
 function start() {
   petri.iterate();
-  if(petri.food.length < 80) {
+
+  if(petri.timeCounter % 300 == 0) {
+    let l= petri.cells.length;
+    let n : Array<Cell> = [];
+  for(let i=0; i<petri.cells.length; i++) {
+    console.log("j")
+      let currentCell = petri.cells[i];
+    if(currentCell.size > 100) {
+        //petri.cells.splice(i, 1)
+        let s = currentCell.split();
+        s[0].updatePoints(petri.cells, petri.food);
+        s[1].updatePoints(petri.cells, petri.food);
+        n.push(s[0])
+        n.push(s[0])
+        //petri.cells.push(s[0]);
+        //petri.cells.push(s[1]);
+
+      } else {n.push(currentCell)}
+    }
+        petri.cells = n;
+      console.log(9)
+    }
+  if(petri.food.length < 400) {
     for(let i=0; i<200; i++) {
-      petri.food.push(new Cell(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), 5, [0,0,0]));
+      petri.food.push(new Sugar(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), [0,0,0])); 
     }
   }
   setTimeout(start, 1000/60) 
+
 }
 
-
-
-/*
-canvas.addEventListener("mousemove", (e:MouseEvent) => {
- let a = 2;
-  let mouse = [e.clientX - setUp.width/2, e.clientY - setUp.height/2];
-  let distance = Math.sqrt(mouse[0]*mouse[0] + mouse[1]*mouse[1]);
-  let thresh = 100;
-  let mult = distance < thresh ? distance / thresh : 1
-  dx = mouse[0] / distance * mult;
-  dy = mouse[1] / distance * mult;
-  mpos = new Point(Math.max(Math.min(mpos.x + a * dx, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(mpos.y + a *dy, setUp.borderBottom), setUp.borderTop))
-  console.log(mpos)
-})*/
-
-
+petri.initialize();
 start();

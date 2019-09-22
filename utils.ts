@@ -56,3 +56,24 @@ export class setUp {
   public static directionX = 0;
   public static directionY = 0;
 }
+
+export function getAverageColor(colors : Array<[number, number, number]>, weights : Array<number>) : [number, number, number] {
+    let resuts : [number, number, number] = [0,0,0];
+    for(let i=0; i<colors.length; i++) {
+        resuts[0] += Math.pow(colors[i][0], 2) * weights[i];
+        resuts[1] += Math.pow(colors[i][1], 2) * weights[i];
+        resuts[2] += Math.pow(colors[i][2], 2) * weights[i];
+    }
+    resuts = [Math.sqrt(resuts[0]), Math.sqrt(resuts[1]), Math.sqrt(resuts[2])];
+    return resuts;
+}
+
+
+export function getColorGivenHash(colors:Array<[number, number, number]>, probabilities: Array<number>, probability:number) : [number, number, number] {
+    let index:number = -1;
+    while(probability >= 0) {
+        index++;
+        probability -= probabilities[index];
+    }
+    return colors[index];
+}

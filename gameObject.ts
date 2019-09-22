@@ -2,7 +2,7 @@ import {Vertex, Point, setUp, toRGB} from './utils'
 
 export abstract class GameObject {
 
-  public vertices:Array<Vertex>;
+  public vertices:Array<Vertex> = [];
   protected initialAngle:number;
   constructor(public position:Point, public color:[number, number, number], public size : number){};
 
