@@ -8,7 +8,6 @@ export class Environment {
   
   public food:Array<Sugar> = [];
   public cells:Array<Cell> = [];
-  public timeCounter = 0;
   
   constructor(food:Array<Sugar> = [], cells:Array<Cell> = [], public ctx:CanvasRenderingContext2D) {
     [this.food, this.cells] = [food, cells]
@@ -91,7 +90,8 @@ export class Environment {
   public drawBackground() : void {
     let corner = new Point(setUp.center.x - setUp.width/2, setUp.center.y - setUp.height/2);
     ctx.beginPath();
-    ctx.fillStyle = "white";
+    //#FFFECF
+    ctx.fillStyle = "#efefef";
     ctx.rect(0, 0, setUp.width, setUp.height);
     ctx.fill();
     ctx.strokeStyle = "lightgray"; 
@@ -112,61 +112,52 @@ export class Environment {
   
   public iterate() {
     setUp.center = new Point(setUp.mapwidth/2, setUp.mapheight/2);
-    this.timeCounter+=0.01
-    if(this.timeCounter>=1) {
-      this.cells.forEach(x=>x.updatePoints(this.cells, this.food));
-      this.timeCounter = 0;
-    }
-    this.cells.forEach(x=>x.moveXY(this.timeCounter))
-    let a = 10 
+    this.cells.forEach(x=>x.updatePoints(this.cells, this.food));
+    this.cells.forEach(x=>x.moveXY())
+    this.food.forEach(x=>x.movePoints())
     this.drawBackground();
     this.drawAllObjects();
     this.detectAllCellCollisions();
+    ctx.font = "bold 30px Arial";
+    ctx.fillStyle = "black"
+    ctx.fillText("Cell Count: "  + petri.cells.length.toString(), (canvas.width -230),canvas.height/2 - 300) ;
+
   }
 }
 
 let petri = new Environment([], [], ctx)
 
-for(let i=0; i<30; i++) {
+for(let i=0; i<40; i++) {
   petri.cells.push(new Cell(new Point(Math.random() * setUp.mapwidth, Math.random() * setUp.mapheight), Math.random() * 20 + 30, [Math.random() * 255, Math.random() * 255, Math.random() * 255], [Math.random(), Math.random(), Math.random()])); }
 
-for(let i=0; i<500; i++) {
+for(let i=0; i<800; i++) {
   petri.food.push(new Sugar(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), [0,0,0])); 
 }
 
 function start() {
+
   petri.iterate();
-
-  if(petri.timeCounter % 1 == 0) {
-    let l= petri.cells.length;
-    let n : Array<Cell> = [];
+  let n : Array<Cell> = [];
   for(let i=0; i<petri.cells.length; i++) {
-      let currentCell = petri.cells[i];
-      currentCell.updatePoints(petri.cells, petri.food);
-      
+    let currentCell = petri.cells[i];
+    currentCell.updatePoints(petri.cells, petri.food);
     if(currentCell.size > 100) {
-        //petri.cells.splice(i, 1)
-        let s = currentCell.split();
-        s[0].updatePoints(petri.cells, petri.food);
-        s[1].updatePoints(petri.cells, petri.food);
-        s[0].points[0][0] *=-1;
-        s[0].points[0][1] *=-1;
-        n.push(s[0])
-        n.push(s[1])
-        //petri.cells.push(s[0]);
-        //petri.cells.push(s[1]);
-
-      } else {n.push(currentCell)}
-    }
-        petri.cells = n;
-    }
-  if(petri.food.length < 400) {
-    for(let i=0; i<200; i++) {
+      let s = currentCell.split();
+      s[0].movementDirection[0] *=-2;
+      s[0].movementDirection[1] *=-2;
+      s[0].updatePoints(petri.cells, petri.food);
+      s[1].updatePoints(petri.cells, petri.food);
+      n.push(s[0])
+      n.push(s[1])
+    } else {n.push(currentCell)}
+  }
+  petri.cells = n;
+  if(petri.food.length < 800) {
+    for(let i=0; i<600; i++) {
       petri.food.push(new Sugar(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), [0,0,0])); 
     }
   }
   setTimeout(start, 1000/60) 
-
 }
 
 petri.initialize();

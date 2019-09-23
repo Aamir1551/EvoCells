@@ -1,4 +1,4 @@
-import {Point, Vertex, bezierCurve, getRandomPositionOnCanvas, setUp, toRGB, getAverageColor, getColorGivenHash} from './utils'
+import {Point, Vertex, bezierCurve, getRandomPositionOnCanvas, setUp, toRGB, getAverageColor, getColorGivenHash, sineCircleXYatAngle} from './utils'
 import {GameObject} from './gameObject'
 import { Sugar } from './sugar';
 
@@ -9,7 +9,8 @@ export class Cell extends GameObject{
   protected initialAngle:number = Math.random() * setUp.TAU;
   public directionX : number = 0;
   public directionY : number = 0;
-  public points:[[number, number], [number, number], [number, number], [number, number]]; 
+  public movementDirection:[number, number] = [0,0]; 
+  public splitting:[number, [number, number]] = [-1, [0,0]];
 
   constructor(position:Point, size:number, color:[number, number, number], public DNA: [number, number, number], public targetSize = size) {
     //DNA = [speed, size, sense]
@@ -36,6 +37,7 @@ export class Cell extends GameObject{
     let b = new Cell(this.position, this.size, this.color, this.getDNAMutated());
     a.targetSize = s;
     b.targetSize = s;
+    a.splitting = [100, [this.movementDirection[0] *-1, this.movementDirection[1] *-1]]
     return [a, b];
   }
 
@@ -56,9 +58,7 @@ export class Cell extends GameObject{
       let limit = 10;
       let [current, before, after] : [Vertex, Vertex, Vertex] = [this.vertices[i], this.vertices[(i-1+n) % n], this.vertices[(i + 1) % n]];
       let acc = (before.velocity + after.velocity + 8*Math.min(Math.max((current.velocity+Math.random()-0.5)*0.7, -limit), limit))/10.0;
-
       let collision : boolean = this.vertices[i].colliding;
-      
       let accAdd  = collision ? Math.min(acc, 0) - 1 : acc;
       let radius = (before.distance + after.distance + 8 * (9 * Math.max(current.distance + acc, 0) + this.size) / 10) / 10
       let angle = setUp.TAU * i / n + this.initialAngle;
@@ -67,64 +67,52 @@ export class Cell extends GameObject{
   }
 
   public updatePoints(cells:Array<Cell>, food:Array<Sugar>) : void {
+    if(this.splitting[0] > 0) {
+      this.splitting[0]--;
+      this.movementDirection = this.splitting[1];
+      return;
+    }
     let vectorGOTO : [number, number]= [0,0];
-    let vectorSwirl : [number, number]= [0,0];
     let range : number = this.DNA[2] * 300;
     for(let i=0; i<cells.length; i++) {
-      let dist: (number) = cells[i].position.distanceSquared(this.position) - cells[i].size - this.size;
+      let dist: (number) = Math.max(cells[i].position.distanceSquared(this.position) - cells[i].size - this.size, 0.00001);
       if(dist <= range) {
         if(cells[i].size * 1.2 < this.size) {
-          vectorGOTO[0] += (cells[i].position.x - this.position.x) * 3;
-          vectorGOTO[1] += (cells[i].position.y - this.position.y) * 3;
+          range = dist;
+          vectorGOTO[0] = (cells[i].position.x - this.position.x);
+          vectorGOTO[1] = (cells[i].position.y - this.position.y);
         }
-        if(cells[i].size * 1.2 > this.size) {
-          vectorGOTO[0] -= (cells[i].position.x - this.position.x) * 3;
-          vectorGOTO[1] -= (cells[i].position.y - this.position.y) * 3;
+        if(cells[i].size > this.size * 1.2) {
+          range = dist;
+          vectorGOTO[0] = (cells[i].position.x - this.position.x) * -1;
+          vectorGOTO[1] = (cells[i].position.y - this.position.y) * -1;
         }
       }
     }
-    
+    if(vectorGOTO.toString() != [0,0].toString()){
+      this.movementDirection = vectorGOTO;
+      return;
+    }
     for(let i=0; i<food.length; i++) {
-      let dist:number = food[i].position.distanceSquared(this.position) - this.size; 
+      let dist:number = Math.max(food[i].position.distanceSquared(this.position) - this.size, 0.0001); 
       if(dist<=range) {
-        vectorSwirl[0] += (food[i].position.x - this.position.x) * 0.1;
-        vectorSwirl[1] += (food[i].position.y - this.position.y) * 0.1;
+        vectorGOTO[0] += (food[i].position.x - this.position.x);
+        vectorGOTO[1] += (food[i].position.y - this.position.y);
       }
     }
-    this.points = [vectorGOTO, vectorGOTO, vectorGOTO, vectorGOTO]
-    if(vectorGOTO.toString() == [0,0].toString()) {
-      this.points = [vectorSwirl, vectorSwirl, vectorSwirl, vectorSwirl]
-      vectorGOTO = [Math.random() * 100 - 50, Math.random() * 100 - 50];
+    if(vectorGOTO.toString() != [0,0].toString()) {
+      this.movementDirection = [vectorGOTO[0] + this.movementDirection[0], vectorGOTO[1] + this.movementDirection[1]];
+      return;
     }
-    if(vectorSwirl.toString() == [0,0].toString()) {
-      this.points = [[Math.random() * 100 - 50, Math.random() * 100 - 50], vectorSwirl, vectorSwirl, vectorSwirl]
-    }
-    
-    
-    /*
-
-
-
-    if(vectorSwirl.toString() == [0,0].toString()) {
-      vectorSwirl = [Math.random() * 100 - 50, Math.random() * 100 -50];
-    }
-    let [a,b] = vectorSwirl
-    let [c,d] = vectorGOTO
-    this.points = [[a/2 ,b/2], [ (a+c)/2, (b+d)/2],[c/2,d/2], [c,d]]; */
   }
 
-  public moveXY(time:number) : void{
-
-    let a = this.DNA[0] * 5;
-    let [cx, cy]  = bezierCurve(this.points[0], this.points[1], this.points[2], this.points[3], time);
-    let mouse = [cx, cy]
-    mouse = [this.points[0][0], this.points[0][1]]
-    let distance = Math.max(Math.sqrt(mouse[0]*mouse[0] + mouse[1]*mouse[1]), 0.00001);
-    let thresh = 100;
-    let mult = distance < thresh ? distance / thresh : 1
-    this.directionX = mouse[0] / distance * mult;
-    this.directionY = mouse[1] / distance * mult;
-    this.position = new Point(Math.max(Math.min(this.position.x + a * this.directionX, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(this.position.y + a * this.directionY, setUp.borderBottom), setUp.borderTop)) 
+  public moveXY() : void{
+    let speed = this.DNA[0] * 5;
+    let distance = Math.max(Math.sqrt( Math.pow(this.movementDirection[0], 2) + Math.pow(this.movementDirection[1], 2)), 0.00001);
+    this.movementDirection = [this.movementDirection[0] /distance, this.movementDirection[1] / distance]
+    this.directionX = Math.max(Math.min(this.movementDirection[0] * speed, 10), -10);
+    this.directionY = Math.max(Math.min(this.movementDirection[1] * speed, 10), -10);
+    this.position = new Point(Math.max(Math.min(this.position.x + this.directionX, setUp.borderRight), setUp.borderLeft), Math.max(Math.min(this.position.y + this.directionY, setUp.borderBottom), setUp.borderTop)) 
   } 
 
   public drawSense(ctx:CanvasRenderingContext2D) :void {
