@@ -1,4 +1,4 @@
-import {Point, Vertex, bezierCurve, getRandomPositionOnCanvas, setUp, toRGB, getAverageColor, getColorGivenHash, sineCircleXYatAngle} from './utils'
+import {Point, Vertex, setUp, getAverageColor} from './utils'
 import {GameObject} from './gameObject'
 import { Sugar } from './sugar';
 
@@ -43,9 +43,9 @@ export class Cell extends GameObject{
 
   public getDNAMutated() : [number, number, number] {
     let [speed, size, sense] = this.DNA;
-    speed = Math.max(Math.min(speed + Math.random() /10 , 1), 0);
-    size = Math.max(Math.min(size + Math.random()/10, 1), 0);
-    sense = Math.max(Math.min(sense + Math.random()/10, 1), 0);
+    speed = Math.max(Math.min(speed + Math.random() /10 - 0.05 , 1), 0);
+    size = Math.max(Math.min(size + Math.random()/10 - 0.05, 1), 0);
+    sense = Math.max(Math.min(sense + Math.random()/10 - 0.05, 1), 0);
     return [speed, size, sense];
   }
 
@@ -86,7 +86,7 @@ export class Cell extends GameObject{
           range = dist;
           vectorGOTO[0] = (cells[i].position.x - this.position.x) * -1;
           vectorGOTO[1] = (cells[i].position.y - this.position.y) * -1;
-        }
+        } 
       }
     }
     if(vectorGOTO.toString() != [0,0].toString()){
@@ -132,3 +132,4 @@ export class Cell extends GameObject{
   }
 
 }
+

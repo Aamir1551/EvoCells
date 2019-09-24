@@ -1,13 +1,15 @@
 import {Cell} from './cell'
-import {setUp, Point} from './utils'
+import {Point, setUp} from './utils'
 import {Sugar} from './sugar'
 
 var canvas:HTMLCanvasElement=document.getElementsByTagName("canvas")[0];
 var ctx=canvas.getContext("2d");
+
 export class Environment {
   
   public food:Array<Sugar> = [];
   public cells:Array<Cell> = [];
+  public generationCount : number = 0;
   
   constructor(food:Array<Sugar> = [], cells:Array<Cell> = [], public ctx:CanvasRenderingContext2D) {
     [this.food, this.cells] = [food, cells]
@@ -90,7 +92,6 @@ export class Environment {
   public drawBackground() : void {
     let corner = new Point(setUp.center.x - setUp.width/2, setUp.center.y - setUp.height/2);
     ctx.beginPath();
-    //#FFFECF
     ctx.fillStyle = "#efefef";
     ctx.rect(0, 0, setUp.width, setUp.height);
     ctx.fill();
@@ -121,6 +122,7 @@ export class Environment {
     ctx.font = "bold 30px Arial";
     ctx.fillStyle = "black"
     ctx.fillText("Cell Count: "  + petri.cells.length.toString(), (canvas.width -230),canvas.height/2 - 300) ;
+    ctx.fillText("Generation: "  + petri.generationCount, (canvas.width -230),canvas.height/2 - 270) ;
 
   }
 }
@@ -130,7 +132,7 @@ let petri = new Environment([], [], ctx)
 for(let i=0; i<40; i++) {
   petri.cells.push(new Cell(new Point(Math.random() * setUp.mapwidth, Math.random() * setUp.mapheight), Math.random() * 20 + 30, [Math.random() * 255, Math.random() * 255, Math.random() * 255], [Math.random(), Math.random(), Math.random()])); }
 
-for(let i=0; i<800; i++) {
+for(let i=0; i<200; i++) {
   petri.food.push(new Sugar(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), [0,0,0])); 
 }
 
@@ -143,6 +145,7 @@ function start() {
     currentCell.updatePoints(petri.cells, petri.food);
     if(currentCell.size > 100) {
       let s = currentCell.split();
+      petri.generationCount++;
       s[0].movementDirection[0] *=-2;
       s[0].movementDirection[1] *=-2;
       s[0].updatePoints(petri.cells, petri.food);
@@ -152,8 +155,8 @@ function start() {
     } else {n.push(currentCell)}
   }
   petri.cells = n;
-  if(petri.food.length < 800) {
-    for(let i=0; i<600; i++) {
+  if(petri.food.length < 100) {
+    for(let i=0; i<100; i++) {
       petri.food.push(new Sugar(new Point(Math.round((setUp.borderRight - setUp.borderLeft) * Math.random()) + setUp.borderLeft-1, Math.round((setUp.borderBottom - setUp.borderTop)* Math.random()) + setUp.borderTop -1), [0,0,0])); 
     }
   }
@@ -162,3 +165,4 @@ function start() {
 
 petri.initialize();
 start();
+

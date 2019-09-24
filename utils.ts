@@ -1,10 +1,11 @@
 import {GameObject} from './gameObject' //do check this, as this has been done to avoid circular dependencies
 
-const WIDTH : number = 1800;
-const HEIGHT : number = 700;
+
+var canvas:HTMLCanvasElement=document.getElementsByTagName("canvas")[0];
+var ctx=canvas.getContext("2d");
 
 export function getRandomPositionOnCanvas() : [number, number] {
-    return [Math.random() * WIDTH, Math.random() * HEIGHT];
+    return [Math.random() * setUp.width, Math.random() * setUp.height];
 }
 
 export function bezierCurve(p0:[number, number], p1:[number, number], p2:[number, number], p3:[number, number], t:number) : [number, number] {
@@ -44,8 +45,8 @@ export class Vertex {
 export class setUp {
   public static readonly TAU = Math.PI * 2;
   public static square  = 50;
-  public static width = WIDTH;
-  public static height = HEIGHT;
+  public static width = canvas.width;
+  public static height = canvas.height;
   public static mapwidth = (setUp.width/setUp.square) * setUp.square;
   public static mapheight =(setUp.height / setUp.square) * setUp.square;
   public static borderLeft = 0;
@@ -56,6 +57,8 @@ export class setUp {
   public static directionX = 0;
   public static directionY = 0;
 }
+
+
 
 export function getAverageColor(colors : Array<[number, number, number]>, weights : Array<number>) : [number, number, number] {
     let resuts : [number, number, number] = [0,0,0];
